@@ -155,7 +155,7 @@
     "F.NEXTCLOUD_DECK.S.CARD_NOT_FOUND": ["issueId"],
     "F.REDMINE.S.POST_TIME_SUCCESS": ["issueTitle"],
     "F.SYNC.D_AUTH_CODE.TITLE": ["provider"],
-    "F.SYNC.D_CONFLICT.OVERWRITE_WARNING": ["sourceChanges", "sourceName", "sourceName"],
+    "F.SYNC.D_CONFLICT.OVERWRITE_WARNING": ["sourceChanges", "sourceName"],
     "F.SYNC.D_DATA_REPAIRED.MSG": ["count"],
     "F.SYNC.D_FRESH_CLIENT_CONFIRM.MESSAGE": ["count"],
     "F.SYNC.D_LOCAL_DATA_REPLACE_CONFIRM.MESSAGE": ["count"],

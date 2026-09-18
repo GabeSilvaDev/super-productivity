@@ -349,6 +349,7 @@ if (require.main === module) {
 module.exports = {
   collectLeafKeys,
   collectPlaceholders,
+  getValueAtPath,
   compareTranslationKeys,
   findBraceDefect,
   hasBlockingDefects,

@@ -17,6 +17,7 @@ const {
   collectLeafKeys,
   collectPlaceholders,
   compareTranslationKeys,
+  getValueAtPath,
   hasBlockingDefects,
   inspectTranslationDirectory,
   printError,
@@ -29,16 +30,17 @@ test('unknown-overwrite warnings preserve the safety-critical data labels', () =
   const readLocale = (file) =>
     JSON.parse(readFileSync(join(i18nDirectory, file), 'utf8'));
   const collectPlaceholders = (value) =>
-    [...value.matchAll(/\{\{\s*([\w.]+)\s*\}\}/gu)].map((match) => match[1]).sort();
-  const englishWarning =
-    readLocale('en.json').F.SYNC.D_CONFLICT.OVERWRITE_WARNING_UNKNOWN;
+    typeof value === 'string'
+      ? [...value.matchAll(/\{\{\s*([\w.]+)\s*\}\}/gu)].map((match) => match[1]).sort()
+      : [];
+  const warningKey = 'F.SYNC.D_CONFLICT.OVERWRITE_WARNING_UNKNOWN';
+  const englishWarning = getValueAtPath(readLocale('en.json'), warningKey);
   const expectedPlaceholders = collectPlaceholders(englishWarning);
 
   for (const file of readdirSync(i18nDirectory)
     .filter((file) => file.endsWith('.json') && file !== 'en.json')
     .sort()) {
-    const translatedWarning =
-      readLocale(file).F.SYNC.D_CONFLICT.OVERWRITE_WARNING_UNKNOWN;
+    const translatedWarning = getValueAtPath(readLocale(file), warningKey);
 
     assert.deepEqual(collectPlaceholders(translatedWarning), expectedPlaceholders, file);
   }
@@ -371,10 +373,11 @@ test('hasBlockingDefects is false for a clean report with an empty baseline', ()
   }
 });
 
-// Lower this number when you remove entries from tools/test-lng-files.baseline.json;
-// never raise it. The baseline records translations that already dropped a placeholder
-// when the check was introduced (#10006) and may only shrink.
-const BASELINE_PLACEHOLDER_CEILING = 134;
+// Update this number whenever tools/test-lng-files.baseline.json changes, so the
+// direction of the change shows in the diff; it should only ever go down. The
+// baseline records translations that already dropped a placeholder when the
+// check was introduced (#10006) and may only shrink.
+const BASELINE_PLACEHOLDER_COUNT = 133;
 
 test('no shipped locale drops an English placeholder outside the baseline, and the baseline only shrinks', () => {
   const baseline = readBaselineFile(join(__dirname, 'test-lng-files.baseline.json'));
@@ -395,9 +398,11 @@ test('no shipped locale drops an English placeholder outside the baseline, and t
   assert.deepEqual(newDrops, []);
   assert.deepEqual(stale, []);
   assert.deepEqual(report.staleBaselineFiles, []);
-  assert.ok(
-    baselinedPlaceholders <= BASELINE_PLACEHOLDER_CEILING,
-    `baseline grew to ${baselinedPlaceholders} placeholders (ceiling ${BASELINE_PLACEHOLDER_CEILING})`,
+  assert.equal(
+    baselinedPlaceholders,
+    BASELINE_PLACEHOLDER_COUNT,
+    `baseline lists ${baselinedPlaceholders} placeholders, expected ${BASELINE_PLACEHOLDER_COUNT}; ` +
+      'update BASELINE_PLACEHOLDER_COUNT (it should only ever go down)',
   );
 });
 
@@ -409,8 +414,10 @@ test('every shipped locale keeps the {{errors}} placeholder of PLUGINS.VALIDATIO
     .filter(
       (file) =>
         !collectPlaceholders(
-          JSON.parse(readFileSync(join(i18nDirectory, file), 'utf8')).PLUGINS
-            .VALIDATION_FAILED,
+          getValueAtPath(
+            JSON.parse(readFileSync(join(i18nDirectory, file), 'utf8')),
+            'PLUGINS.VALIDATION_FAILED',
+          ),
         ).includes('errors'),
     );
 
