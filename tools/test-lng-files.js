@@ -315,7 +315,8 @@ const printReport = (report) => {
   if (report.totalNewDroppedPlaceholders > 0) {
     console.error(
       'A translation drops a placeholder that en.json declares, so the value the ' +
-        'call site passes is lost; add it back to the translation.',
+        'call site passes is lost; add it back to the translation ' +
+        '(see docs/TRANSLATING.md, "Exception – placeholders").',
     );
   }
   if (report.totalStaleBaseline > 0 || report.staleBaselineFiles.length > 0) {
