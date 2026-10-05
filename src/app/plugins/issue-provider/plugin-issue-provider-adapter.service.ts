@@ -254,7 +254,10 @@ export class PluginIssueProviderAdapterService implements IssueServiceInterface 
         // Due dates are dropped either way: they are set on task creation and
         // never re-pulled, so a refresh cannot reschedule what the user has
         // planned. Same rule as BaseIssueProviderService.getFreshDataForIssueTask.
-        const baseTaskData: MutableTaskChanges = this._buildBaseIssueTask(issue);
+        const baseTaskData: MutableTaskChanges = this._buildBaseIssueTask(
+          issue,
+          resolved.provider.definition.doneStates,
+        );
         delete baseTaskData.dueDay;
         delete baseTaskData.dueWithTime;
         for (const mapping of resolved.provider.definition.fieldMappings ?? []) {

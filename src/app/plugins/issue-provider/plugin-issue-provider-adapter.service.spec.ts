@@ -446,6 +446,52 @@ describe('PluginIssueProviderAdapterService', () => {
         expect(addTaskDataFor('closed').isDone).toBe(true);
         expect(addTaskDataFor('Shipped').isDone).toBe(false);
       });
+
+      const refreshAfterImport = async (
+        state: string,
+        defOverrides: Partial<IssueProviderPluginDefinition>,
+      ): Promise<{ imported: IssueTask; afterRefresh: Partial<Task> }> => {
+        const imported = addTaskDataFor(state, defOverrides);
+        registrySpy.getProvider.and.returnValue(
+          createMockProvider({
+            ...defOverrides,
+            getById: jasmine.createSpy('getById').and.resolveTo({
+              id: 'ISS-1',
+              title: 'Issue (edited)',
+              state,
+              lastUpdated: 2000,
+            } as PluginIssue),
+          }),
+        );
+        const result = await service.getFreshDataForIssueTask({
+          ...imported,
+          id: 'task-1',
+          issueId: 'ISS-1',
+          issueProviderId: PROVIDER_ID,
+          issueLastUpdated: 1000,
+        } as unknown as Task);
+        return { imported, afterRefresh: { ...imported, ...result!.taskChanges } };
+      };
+
+      it('should keep a task imported as done when the issue is refreshed', async () => {
+        const { imported, afterRefresh } = await refreshAfterImport('Shipped', {
+          doneStates: ['shipped'],
+        });
+
+        expect(imported.isDone).toBe(true);
+        expect(afterRefresh.title).toBe('Issue (edited)');
+        expect(afterRefresh.isDone).toBe(true);
+      });
+
+      it('should keep a task imported as open when the issue is refreshed and doneStates is empty', async () => {
+        const { imported, afterRefresh } = await refreshAfterImport('Closed', {
+          doneStates: [],
+        });
+
+        expect(imported.isDone).toBe(false);
+        expect(afterRefresh.title).toBe('Issue (edited)');
+        expect(afterRefresh.isDone).toBe(false);
+      });
     });
   });
 
