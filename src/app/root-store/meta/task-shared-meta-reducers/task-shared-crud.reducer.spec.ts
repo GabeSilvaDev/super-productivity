@@ -141,6 +141,31 @@ describe('taskSharedCrudMetaReducer', () => {
         state,
       );
     });
+
+    it('goes to the top when the previous instance sits in the backlog, not the task list', () => {
+      const state = createStateWithExistingTasks(['a', 'rpt_yesterday'], ['b']);
+      state[TASK_FEATURE_NAME].entities.b = {
+        ...(state[TASK_FEATURE_NAME].entities.b as Task),
+        repeatCfgId: 'cfg1',
+        created: yesterday.getTime(),
+      };
+      state[TASK_FEATURE_NAME].entities.rpt_yesterday = {
+        ...(state[TASK_FEATURE_NAME].entities.rpt_yesterday as Task),
+        repeatCfgId: 'cfg1',
+        created: yesterday.getTime() - DAY_MS,
+      };
+      const action = createAddInstanceAction();
+
+      metaReducer(state, action);
+
+      // anchor 'b' is only in backlogTaskIds, so the main list falls back to the top
+      expectStateUpdate(
+        expectProjectUpdate('project1', { taskIds: ['rpt_today', 'a', 'rpt_yesterday'] }),
+        action,
+        mockReducer,
+        state,
+      );
+    });
   });
 
   describe('addTask action', () => {
